@@ -1,1 +1,1 @@
-# vim-setup-
+# vim-config
