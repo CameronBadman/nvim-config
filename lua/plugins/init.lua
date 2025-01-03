@@ -16,10 +16,6 @@ if not vim.loop.fs_stat(lazypath) then
 	print("Installation result: " .. vim.inspect(result))
 end
 
--- Verify the directory exists
-local stat = vim.loop.fs_stat(lazypath)
-print("Directory exists after install: " .. tostring(stat ~= nil))
-
 vim.opt.runtimepath:prepend(lazypath)
 vim.g.mapleader = " "
 
@@ -78,18 +74,19 @@ return require("lazy").setup({
 			require("plugins.lsp").setup()
 		end,
 	},
+
 	{
-		"neovim/nvim-lspconfig",
+		"williamboman/mason-lspconfig.nvim",
 		dependencies = {
-			"williamboman/mason-lspconfig.nvim",
+			"williamboman/mason.nvim",
+			"neovim/nvim-lspconfig",
 			"hrsh7th/cmp-nvim-lsp",
 		},
 		config = function()
-			-- We'll create this file next if you need LSP configuration
-			require("plugins.lsp")
+			require("plugins.lsp").setup()
 		end,
+		event = { "BufReadPre", "BufNewFile" },
 	},
-
 	-- Autocompletion with nvim-cmp
 	{
 		"hrsh7th/nvim-cmp",
