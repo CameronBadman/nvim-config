@@ -1,7 +1,4 @@
--- Initialize lazy.nvim package manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-print("Lazy path: " .. lazypath)
-
 if not vim.loop.fs_stat(lazypath) then
 	print("Installing lazy.nvim...")
 	local clone_cmd = {
@@ -254,20 +251,28 @@ return require("lazy").setup({
 	{
 		"hrsh7th/vim-vsnip",
 		dependencies = {
-			{ "rafamadriz/friendly-snippets", url = "https://github.com/rafamadriz/friendly-snippets.git" },
+			{ "rafamadriz/friendly-snippets" },
+			{ "L3MON4D3/LuaSnip" },
+			{ "saadparwaiz1/cmp_luasnip" },
 		},
 		config = function()
-			-- Set snippet directory
 			vim.g.vsnip_snippet_dir = vim.fn.stdpath("config") .. "/snippets"
 
-			-- Optional: Add keymaps for jumping between snippet fields
-			vim.cmd([[
-                " Jump forward or backward
-                imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-                smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-                imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
-                smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
-            ]])
+			-- Debug: Print the snippets directories
+			print("Snippet dirs:", vim.inspect(vim.g.vsnip_snippet_dirs))
+
+			-- Ensure the friendly-snippets path is correct
+			local friendly_snippets_path = vim.fn.stdpath("data") .. "/lazy/friendly-snippets/snippets"
+			vim.g.vsnip_snippet_dirs = { friendly_snippets_path }
+
+			-- Load LuaSnip snippets
+			require("luasnip").setup({})
+			require("luasnip.loaders.from_vscode").lazy_load()
+
+			-- Add a debug command to check available snippets
+			vim.api.nvim_create_user_command("SnipList", function()
+				vim.cmd("VsnipOpen")
+			end, {})
 		end,
 	},
 })

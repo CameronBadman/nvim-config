@@ -1,4 +1,5 @@
 local cmp = require("cmp")
+local luasnip = require("luasnip")
 
 local kind_icons = {
 	Text = "󰉿",
@@ -31,7 +32,11 @@ local kind_icons = {
 cmp.setup({
 	snippet = {
 		expand = function(args)
-			vim.fn["vsnip#anonymous"](args.body)
+			if vim.fn["vsnip#available"](1) then
+				vim.fn["vsnip#anonymous"](args.body)
+			else
+				luasnip.lsp_expand(args.body)
+			end
 		end,
 	},
 	window = {
@@ -46,6 +51,7 @@ cmp.setup({
 			vim_item.menu = ({
 				nvim_lsp = "[LSP]",
 				vsnip = "[Snippet]",
+				luasnip = "[Snippet]",
 				buffer = "[Buffer]",
 				path = "[Path]",
 			})[entry.source.name]
@@ -66,6 +72,8 @@ cmp.setup({
 		["<Tab>"] = cmp.mapping(function(fallback)
 			if cmp.visible() then
 				cmp.select_next_item()
+			elseif luasnip.expand_or_jumpable() then
+				luasnip.expand_or_jump()
 			else
 				fallback()
 			end
@@ -73,6 +81,8 @@ cmp.setup({
 		["<S-Tab>"] = cmp.mapping(function(fallback)
 			if cmp.visible() then
 				cmp.select_prev_item()
+			elseif luasnip.jumpable(-1) then
+				luasnip.jump(-1)
 			else
 				fallback()
 			end
@@ -81,6 +91,7 @@ cmp.setup({
 	sources = cmp.config.sources({
 		{ name = "nvim_lsp", priority = 1000 },
 		{ name = "vsnip", priority = 750 },
+		{ name = "luasnip", priority = 750 },
 		{ name = "buffer", priority = 500 },
 		{ name = "path", priority = 250 },
 	}),
