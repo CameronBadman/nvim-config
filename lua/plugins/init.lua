@@ -8,7 +8,7 @@ if not vim.loop.fs_stat(lazypath) then
 		"git",
 		"clone",
 		"--filter=blob:none",
-		"git@github.com:folke/lazy.nvim.git",
+		"https://github.com/folke/lazy.nvim.git", -- Changed from SSH to HTTPS
 		"--branch=stable",
 		lazypath,
 	}
@@ -22,7 +22,10 @@ vim.g.mapleader = " "
 -- Add a small delay to ensure everything is loaded
 vim.defer_fn(function()
 	require("lazy").setup({
-		-- Your existing plugin config...
+		git = {
+			url_format = "https://github.com/%s.git", -- Added this
+			default_url_format = "https://github.com/%s.git", -- Added this
+		},
 	})
 end, 100)
 
@@ -115,9 +118,10 @@ return require("lazy").setup({
 					["<CR>"] = cmp.mapping.confirm({ select = true }),
 				},
 				sources = {
-					{ name = "nvim_lsp" },
-					{ name = "buffer" },
-					{ name = "path" },
+					{ name = "nvim_lsp", priority = 1000 },
+					{ name = "vsnip", priority = 750 },
+					{ name = "buffer", priority = 500 },
+					{ name = "path", priority = 250 },
 				},
 				experimental = {
 					ghost_text = true,
@@ -243,6 +247,27 @@ return require("lazy").setup({
 		},
 		config = function()
 			require("plugins.linting")
+		end,
+	},
+
+	-- Snippet support
+	{
+		"hrsh7th/vim-vsnip",
+		dependencies = {
+			{ "rafamadriz/friendly-snippets", url = "https://github.com/rafamadriz/friendly-snippets.git" },
+		},
+		config = function()
+			-- Set snippet directory
+			vim.g.vsnip_snippet_dir = vim.fn.stdpath("config") .. "/snippets"
+
+			-- Optional: Add keymaps for jumping between snippet fields
+			vim.cmd([[
+                " Jump forward or backward
+                imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+                smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+                imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+                smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+            ]])
 		end,
 	},
 })
