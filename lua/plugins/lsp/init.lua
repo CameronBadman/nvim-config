@@ -1,72 +1,82 @@
+local M = {}
 
-
-
--- lsp/init.lua
-local lspconfig = require("lspconfig")
-local mason_lspconfig = require("mason-lspconfig")
-
--- Function to ensure the language server setup
+-- Enhanced on_attach function with formatting capabilities
 local function on_attach(client, bufnr)
-  -- Key mappings for LSP actions (e.g., go to definition, show hover info, etc.)
-  local opts = { noremap = true, silent = true }
+	local opts = { noremap = true, silent = true }
+	-- Core LSP mappings
+	vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+	vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+	vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+	vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+	vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+	vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
 
-  -- Example key mappings for LSP
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<Cmd>lua vim.lsp.buf.references()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gi', '<Cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<C-k>', '<Cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  
-  -- LSP diagnostics key mappings
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>d', '<Cmd>lua vim.diagnostic.open_float()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', '[d', '<Cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-  vim.api.nvim_buf_set_keymap(bufnr, 'n', ']d', '<Cmd>lua vim.diagnostic.goto_next()<CR>', opts)
+	-- LSP diagnostics mappings
+	vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
+	vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+	vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+
+	-- Format on save
+	if client.server_capabilities.documentFormattingProvider then
+		vim.api.nvim_create_autocmd("BufWritePre", {
+			buffer = bufnr,
+			callback = function()
+				vim.lsp.buf.format({ async = false })
+			end,
+		})
+	end
 end
 
--- Mason LSP configuration
-mason_lspconfig.setup({
-  ensure_installed = { "pyright", "ts_ls", "lua_ls" },  -- List of LSPs to install
-  automatic_installation = true,  -- Automatically install missing LSPs
-})
+function M.setup()
+	local mason_lspconfig = require("mason-lspconfig")
+	local lspconfig = require("lspconfig")
+	local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
--- Setup each LSP
-lspconfig.pyright.setup({
-  on_attach = on_attach,  -- Attach the LSP configurations
-  settings = {
-    python = {
-      analysis = {
-        typeCheckingMode = "basic",  -- Adjust Python type checking
-      },
-    },
-  },
-})
+	-- Mason LSP setup
+	mason_lspconfig.setup({
+		ensure_installed = {
+			"pyright",
+			"typescript-language-server",
+			"lua_ls",
+			"dockerls",
+			"gopls",
+			"clangd",
+			"yamlls",
+		},
+		automatic_installation = true,
+	})
 
+	-- Setup handlers for all servers
+	mason_lspconfig.setup_handlers({
+		function(server_name)
+			local opts = {
+				on_attach = on_attach,
+				capabilities = capabilities,
+			}
 
-lspconfig.ts_ls.setup({
-  on_attach = on_attach,
-  flags = {
-    debounce_text_changes = 150,
-  },
-  settings = {
-    typescript = {
-      format = { enable = true },  -- Enable formatting for TypeScript
-    },
-  },
-})
+			-- Server-specific settings
+			if server_name == "lua_ls" then
+				opts.settings = {
+					Lua = {
+						diagnostics = {
+							globals = { "vim" },
+						},
+					},
+				}
+			elseif server_name == "yamlls" then
+				opts.settings = {
+					yaml = {
+						schemas = {
+							kubernetes = "/*.k8s.yaml",
+							["docker-compose"] = "/*docker-compose.yml",
+						},
+					},
+				}
+			end
 
-lspconfig.lua_ls.setup({
-  on_attach = on_attach,
-  settings = {
-    Lua = {
-      diagnostics = {
-        globals = { 'vim' },  -- Enable vim global for Lua LSP
-      },
-    },
-  },
-})
+			lspconfig[server_name].setup(opts)
+		end,
+	})
+end
 
--- You can add additional language server setups here as needed
--- Example:
--- lspconfig.rust_analyzer.setup({ on_attach = on_attach })
-
+return M

@@ -68,17 +68,14 @@ return require("lazy").setup({
 	},
 	{
 		"williamboman/mason-lspconfig.nvim",
-		dependencies = { "williamboman/mason.nvim" },
+		dependencies = {
+			"williamboman/mason.nvim",
+			"neovim/nvim-lspconfig",
+			"hrsh7th/cmp-nvim-lsp",
+		},
 		config = function()
-			require("mason-lspconfig").setup({
-				ensure_installed = {
-					"pyright",
-					"tsserver",
-					"lua_ls",
-					"dockerls", -- Docker Language Server
-				},
-				automatic_installation = true,
-			})
+			require("mason").setup()
+			require("plugins.lsp").setup()
 		end,
 	},
 	{
