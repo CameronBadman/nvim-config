@@ -98,32 +98,7 @@ return require("lazy").setup({
 			"hrsh7th/vim-vsnip",
 		},
 		config = function()
-			local cmp = require("cmp")
-			cmp.setup({
-				snippet = {
-					expand = function(args)
-						vim.fn["vsnip#anonymous"](args.body)
-					end,
-				},
-				mapping = {
-					["<C-p>"] = cmp.mapping.select_prev_item(),
-					["<C-n>"] = cmp.mapping.select_next_item(),
-					["<C-d>"] = cmp.mapping.scroll_docs(-4),
-					["<C-f>"] = cmp.mapping.scroll_docs(4),
-					["<C-Space>"] = cmp.mapping.complete(),
-					["<C-e>"] = cmp.mapping.close(),
-					["<CR>"] = cmp.mapping.confirm({ select = true }),
-				},
-				sources = {
-					{ name = "nvim_lsp", priority = 1000 },
-					{ name = "vsnip", priority = 750 },
-					{ name = "buffer", priority = 500 },
-					{ name = "path", priority = 250 },
-				},
-				experimental = {
-					ghost_text = true,
-				},
-			})
+			require("plugins.autocompletion")
 		end,
 	},
 
@@ -136,7 +111,6 @@ return require("lazy").setup({
 			{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
 		},
 		config = function()
-			-- We'll create this file next if you need Telescope configuration
 			require("plugins.telescope")
 		end,
 	},
@@ -171,7 +145,6 @@ return require("lazy").setup({
 		lazy = false, -- Load immediately
 		priority = 1000, -- Ensure it loads before other plugins
 		config = function()
-			-- This loads your custom theme configuration from themes/cyberdream.lua
 			require("themes.cyberdream").setup()
 			vim.cmd("colorscheme cyberdream")
 		end,
@@ -187,7 +160,6 @@ return require("lazy").setup({
 			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-			-- We'll create this file next if you need Neo-tree configuration
 			require("plugins.neo-tree")
 		end,
 	},

@@ -1,6 +1,5 @@
 local cmp = require("cmp")
 local luasnip = require("luasnip")
-
 local kind_icons = {
 	Text = "󰉿",
 	Method = "󰆧",
@@ -40,8 +39,17 @@ cmp.setup({
 		end,
 	},
 	window = {
-		completion = cmp.config.window.bordered(),
-		documentation = cmp.config.window.bordered(),
+		completion = {
+			border = "rounded",
+			max_height = 10,
+			max_width = 50,
+			scrolloff = 2,
+		},
+		documentation = {
+			border = "rounded",
+			max_height = 15,
+			max_width = 50,
+		},
 	},
 	formatting = {
 		format = function(entry, vim_item)
@@ -59,8 +67,9 @@ cmp.setup({
 		end,
 	},
 	mapping = {
-		["<C-p>"] = cmp.mapping.select_prev_item(),
-		["<C-n>"] = cmp.mapping.select_next_item(),
+		-- Let's try normal keys that work everywhere
+		["<C-k>"] = cmp.mapping.select_prev_item(),
+		["<C-j>"] = cmp.mapping.select_next_item(),
 		["<C-d>"] = cmp.mapping.scroll_docs(-4),
 		["<C-f>"] = cmp.mapping.scroll_docs(4),
 		["<C-Space>"] = cmp.mapping.complete(),
@@ -89,12 +98,15 @@ cmp.setup({
 		end, { "i", "s" }),
 	},
 	sources = cmp.config.sources({
-		{ name = "nvim_lsp", priority = 1000 },
-		{ name = "vsnip", priority = 750 },
-		{ name = "luasnip", priority = 750 },
-		{ name = "buffer", priority = 500 },
-		{ name = "path", priority = 250 },
+		{ name = "nvim_lsp", priority = 1000, max_item_count = 10 }, -- Limit LSP items
+		{ name = "vsnip", priority = 750, max_item_count = 10 },
+		{ name = "luasnip", priority = 750, max_item_count = 10 },
+		{ name = "buffer", priority = 500, max_item_count = 10 },
+		{ name = "path", priority = 250, max_item_count = 10 },
 	}),
+	view = {
+		entries = { name = "custom", selection_order = "near_cursor" },
+	},
 	experimental = {
 		ghost_text = true,
 	},
