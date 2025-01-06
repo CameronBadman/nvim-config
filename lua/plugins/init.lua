@@ -247,4 +247,45 @@ return require("lazy").setup({
 			end, {})
 		end,
 	},
+
+	-- SonarLint integration
+	{
+		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
+		dependencies = {
+			"neovim/nvim-lspconfig",
+			"williamboman/mason.nvim",
+		},
+		config = function()
+			local mason_path = vim.fn.glob(vim.fn.stdpath("data") .. "/mason/")
+			require("sonarlint").setup({
+				server = {
+					cmd = {
+						"sonarlint-language-server",
+						"-stdio",
+						"-analyzers",
+						-- The analyzers are actually located in the sonarlint-language-server package
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarjs.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarts.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarjava.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarpy.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonargo.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarcfamily.jar",
+						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarhtml.jar",
+					},
+				},
+				filetypes = {
+					"javascript",
+					"javascriptreact",
+					"typescript",
+					"typescriptreact",
+					"python",
+					"java",
+					"go",
+					"cpp",
+					"c",
+					"html",
+				},
+			})
+		end,
+	},
 })
