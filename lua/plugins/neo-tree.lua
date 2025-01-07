@@ -9,10 +9,12 @@ require("neo-tree").setup({
 			visible = true, -- Show hidden files by default
 			hide_dotfiles = false, -- Don't hide dotfiles
 		},
-	},
-	window = {
-		width = 30, -- Width of the file explorer window
-		position = "left", -- Position of the file explorer (left or right)
+		-- Automatically open Neo-tree on startup if no files were specified
+		window = {
+			-- Preserve existing window configuration
+			width = 30,
+			position = "left",
+		},
 	},
 	default_component_configs = {
 		icon = {
@@ -29,6 +31,14 @@ require("neo-tree").setup({
 			},
 		},
 	},
+	-- Open Neo-tree automatically on startup if no files were specified
+	open_on_startup = function()
+		-- Only open if no files were specified when launching Neovim
+		if vim.fn.argc() == 0 then
+			return true
+		end
+		return false
+	end,
 })
 
 -- Function to focus Neo-tree without closing it
@@ -47,6 +57,16 @@ end
 -- Keybindings:
 -- <leader>e will focus the Neo-tree window, but will not close it if it's already focused.
 vim.api.nvim_set_keymap("n", "<leader>e", ":lua FocusNeoTree()<CR>", { noremap = true, silent = true })
-
 -- <leader>E will toggle the Neo-tree (open if closed, close if open)
 vim.api.nvim_set_keymap("n", "<leader>E", ":Neotree toggle<CR>", { noremap = true, silent = true })
+
+-- Additional fallback to ensure Neo-tree opens if the startup option doesn't work
+vim.api.nvim_create_autocmd("VimEnter", {
+	callback = function()
+		if vim.fn.argc() == 0 then
+			vim.defer_fn(function()
+				vim.cmd("Neotree")
+			end, 10)
+		end
+	end,
+})
