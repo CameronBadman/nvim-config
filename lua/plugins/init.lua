@@ -1,3 +1,6 @@
+-- ~/.config/nvim/lua/plugins/init.lua
+
+-- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
 	print("Installing lazy.nvim...")
@@ -5,48 +8,133 @@ if not vim.loop.fs_stat(lazypath) then
 		"git",
 		"clone",
 		"--filter=blob:none",
-		"https://github.com/folke/lazy.nvim.git", -- Changed from SSH to HTTPS
+		"https://github.com/folke/lazy.nvim.git",
 		"--branch=stable",
 		lazypath,
 	}
-	local result = vim.fn.system(clone_cmd)
-	print("Installation result: " .. vim.inspect(result))
+	local ok, result = pcall(vim.fn.system, clone_cmd)
+	if not ok then
+		error("Failed to install lazy.nvim: " .. result)
+	end
+	print("Installation complete")
 end
-
 vim.opt.runtimepath:prepend(lazypath)
+
+-- Set leader key
 vim.g.mapleader = " "
 
--- Add a small delay to ensure everything is loaded
-vim.defer_fn(function()
-	require("lazy").setup({
-		git = {
-			url_format = "https://github.com/%s.git", -- Added this
-			default_url_format = "https://github.com/%s.git", -- Added this
+-- Configure diagnostics globally
+vim.diagnostic.config({
+	virtual_text = {
+		source = true,
+		severity = {
+			min = vim.diagnostic.severity.HINT,
 		},
-	})
-end, 100)
+	},
+	float = {
+		border = "rounded",
+		source = "always",
+		header = "",
+		prefix = "",
+	},
+	signs = true,
+	underline = true,
+	update_in_insert = false,
+	severity_sort = true,
+})
 
--- We'll store all our plugin configurations here
+-- Return the plugin configuration
 return require("lazy").setup({
-	-- Core functionality plugins
+	-- Treesitter
 	{
 		"nvim-treesitter/nvim-treesitter",
+		version = "*",
 		build = ":TSUpdate",
+		event = { "BufReadPost", "BufNewFile" },
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter-textobjects",
+		},
 		config = function()
 			require("nvim-treesitter.configs").setup({
-				ensure_installed = { "lua", "python", "typescript", "javascript" },
-				highlight = { enable = true },
+				ensure_installed = {
+					"lua",
+					"python",
+					"typescript",
+					"javascript",
+					"go",
+					"rust",
+					"c",
+					"cpp",
+					"java",
+					"json",
+					"yaml",
+					"toml",
+					"html",
+					"css",
+					"markdown",
+					"markdown_inline",
+				},
+				sync_install = false,
+				auto_install = true,
+				highlight = {
+					enable = true,
+					additional_vim_regex_highlighting = false,
+				},
 				indent = { enable = true },
+				incremental_selection = {
+					enable = true,
+					keymaps = {
+						init_selection = "<CR>",
+						node_incremental = "<CR>",
+						node_decremental = "<BS>",
+						scope_incremental = "<TAB>",
+					},
+				},
+				textobjects = {
+					select = {
+						enable = true,
+						lookahead = true,
+						keymaps = {
+							["af"] = "@function.outer",
+							["if"] = "@function.inner",
+							["ac"] = "@class.outer",
+							["ic"] = "@class.inner",
+							["aa"] = "@parameter.outer",
+							["ia"] = "@parameter.inner",
+						},
+					},
+					move = {
+						enable = true,
+						set_jumps = true,
+						goto_next_start = {
+							["]f"] = "@function.outer",
+							["]c"] = "@class.outer",
+						},
+						goto_next_end = {
+							["]F"] = "@function.outer",
+							["]C"] = "@class.outer",
+						},
+						goto_previous_start = {
+							["[f"] = "@function.outer",
+							["[c"] = "@class.outer",
+						},
+						goto_previous_end = {
+							["[F"] = "@function.outer",
+							["[C"] = "@class.outer",
+						},
+					},
+				},
 			})
 		end,
 	},
-	"nvim-lua/plenary.nvim", -- Required by several plugins
 
-	-- Git integration with fugitive
+	{ "nvim-lua/plenary.nvim", lazy = false }, -- Required by several plugins
+
+	-- Git integration
 	{
 		"tpope/vim-fugitive",
+		event = "VeryLazy",
 		config = function()
-			-- Add some helpful keymaps for common git operations
 			vim.keymap.set("n", "<leader>gs", ":Git<CR>", { desc = "Git status" })
 			vim.keymap.set("n", "<leader>gd", ":Gdiff<CR>", { desc = "Git diff" })
 			vim.keymap.set("n", "<leader>gb", ":Git blame<CR>", { desc = "Git blame" })
@@ -54,42 +142,31 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- LSP stack with Mason for management
+	-- LSP stack
 	{
 		"williamboman/mason.nvim",
-		priority = 100, -- Load early
+		priority = 100,
 		config = function()
 			require("mason").setup()
 		end,
 	},
 	{
 		"williamboman/mason-lspconfig.nvim",
+		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
 			"williamboman/mason.nvim",
 			"neovim/nvim-lspconfig",
 			"hrsh7th/cmp-nvim-lsp",
 		},
 		config = function()
-			require("mason").setup()
 			require("plugins.lsp").setup()
 		end,
 	},
 
-	{
-		"williamboman/mason-lspconfig.nvim",
-		dependencies = {
-			"williamboman/mason.nvim",
-			"neovim/nvim-lspconfig",
-			"hrsh7th/cmp-nvim-lsp",
-		},
-		config = function()
-			require("plugins.lsp").setup()
-		end,
-		event = { "BufReadPre", "BufNewFile" },
-	},
-	-- Autocompletion with nvim-cmp
+	-- Autocompletion
 	{
 		"hrsh7th/nvim-cmp",
+		event = "InsertEnter",
 		dependencies = {
 			"hrsh7th/cmp-nvim-lsp",
 			"hrsh7th/cmp-buffer",
@@ -102,10 +179,11 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- File navigation with Telescope
+	-- Telescope
 	{
 		"nvim-telescope/telescope.nvim",
 		branch = "0.1.x",
+		cmd = "Telescope",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
@@ -115,15 +193,16 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- Status line with Lualine
+	-- Status line
 	{
 		"nvim-lualine/lualine.nvim",
+		event = "VeryLazy",
 		dependencies = { "kyazdani42/nvim-web-devicons" },
 		config = function()
 			require("lualine").setup({
 				options = {
 					icons_enabled = true,
-					theme = "cyberdream", -- Match your theme
+					theme = "cyberdream",
 					component_separators = { left = "", right = "" },
 					section_separators = { left = "", right = "" },
 				},
@@ -139,34 +218,80 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- Theme configuration
+	-- Theme
 	{
 		"scottmckendry/cyberdream.nvim",
-		lazy = false, -- Load immediately
-		priority = 1000, -- Ensure it loads before other plugins
+		lazy = false,
+		priority = 1000,
 		config = function()
 			require("themes.cyberdream").setup()
 			vim.cmd("colorscheme cyberdream")
 		end,
 	},
 
-	-- File explorer
+	-- File explorer (Neo-tree)
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		branch = "v2.x",
+		cmd = "Neotree",
+		keys = {
+			{ "<leader>e", "<cmd>lua FocusNeoTree()<CR>", desc = "Focus Neo-tree" },
+			{ "<leader>E", "<cmd>Neotree toggle<CR>", desc = "Toggle Neo-tree" },
+		},
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"kyazdani42/nvim-web-devicons",
 			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-			require("plugins.neo-tree")
+			-- Function to focus Neo-tree without closing it
+			_G.FocusNeoTree = function()
+				local is_open = vim.fn.win_findbuf(vim.fn.bufnr("neo-tree")) ~= nil
+				if is_open then
+					vim.cmd("Neotree focus")
+				else
+					vim.cmd("Neotree toggle")
+				end
+			end
+
+			require("neo-tree").setup({
+				close_if_last_window = true,
+				filesystem = {
+					follow_current_file = true,
+					use_libuv_file_watcher = true,
+					hijack_netrw = true,
+					filtered_items = {
+						visible = true,
+						hide_dotfiles = false,
+					},
+				},
+				window = {
+					width = 30,
+					position = "left",
+				},
+				default_component_configs = {
+					icon = {
+						folder_empty = "󰗿",
+					},
+					name = {
+						trailing_slash = true,
+					},
+					git_status = {
+						symbols = {
+							added = "✚",
+							modified = "✎",
+							deleted = "✖",
+						},
+					},
+				},
+			})
 		end,
 	},
 
 	-- Kubernetes integration
 	{
 		"ramilito/kubectl.nvim",
+		cmd = "Kubectl",
 		config = function()
 			require("kubectl").setup()
 			require("plugins.kubectl")
@@ -176,6 +301,7 @@ return require("lazy").setup({
 	-- Documentation generation
 	{
 		"danymat/neogen",
+		cmd = "Neogen",
 		dependencies = "nvim-treesitter/nvim-treesitter",
 		config = function()
 			require("neogen").setup({
@@ -198,7 +324,6 @@ return require("lazy").setup({
 					},
 				},
 			})
-			-- Map to Alt+Shift+D like IntelliJ
 			vim.keymap.set(
 				"n",
 				"<M-S-d>",
@@ -208,9 +333,10 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- Linting and formatting support
+	-- Linting and formatting
 	{
 		"nvimtools/none-ls.nvim",
+		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 		},
@@ -219,9 +345,10 @@ return require("lazy").setup({
 		end,
 	},
 
-	-- Snippet support
+	-- Snippets
 	{
 		"hrsh7th/vim-vsnip",
+		event = "InsertEnter",
 		dependencies = {
 			{ "rafamadriz/friendly-snippets" },
 			{ "L3MON4D3/LuaSnip" },
@@ -229,19 +356,12 @@ return require("lazy").setup({
 		},
 		config = function()
 			vim.g.vsnip_snippet_dir = vim.fn.stdpath("config") .. "/snippets"
-
-			-- Debug: Print the snippets directories
-			print("Snippet dirs:", vim.inspect(vim.g.vsnip_snippet_dirs))
-
-			-- Ensure the friendly-snippets path is correct
 			local friendly_snippets_path = vim.fn.stdpath("data") .. "/lazy/friendly-snippets/snippets"
 			vim.g.vsnip_snippet_dirs = { friendly_snippets_path }
 
-			-- Load LuaSnip snippets
 			require("luasnip").setup({})
 			require("luasnip.loaders.from_vscode").lazy_load()
 
-			-- Add a debug command to check available snippets
 			vim.api.nvim_create_user_command("SnipList", function()
 				vim.cmd("VsnipOpen")
 			end, {})
@@ -251,6 +371,7 @@ return require("lazy").setup({
 	-- SonarLint integration
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
+		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
 			"neovim/nvim-lspconfig",
 			"williamboman/mason.nvim",
@@ -260,32 +381,49 @@ return require("lazy").setup({
 			require("sonarlint").setup({
 				server = {
 					cmd = {
-						"sonarlint-language-server",
+						"/usr/lib/jvm/java-23-openjdk/bin/java",
+						"-jar",
+						mason_path .. "packages/sonarlint-language-server/extension/server/sonarlint-ls.jar",
 						"-stdio",
-						"-analyzers",
-						-- The analyzers are actually located in the sonarlint-language-server package
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarjs.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarts.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarjava.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarpy.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonargo.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarcfamily.jar",
-						mason_path .. "packages/sonarlint-language-server/extension/analyzers/sonarhtml.jar",
 					},
 				},
 				filetypes = {
-					"javascript",
-					"javascriptreact",
-					"typescript",
-					"typescriptreact",
 					"python",
+					"cpp",
+					"javascript",
+					"typescript",
+					"html",
+					"css",
 					"java",
 					"go",
-					"cpp",
-					"c",
-					"html",
+				},
+				settings = {
+					sonarlint = {
+						enabled = true,
+					},
 				},
 			})
 		end,
+	},
+}, {
+	-- Lazy.nvim options
+	git = {
+		url_format = "https://github.com/%s.git",
+		default_url_format = "https://github.com/%s.git",
+	},
+	performance = {
+		rtp = {
+			disabled_plugins = {
+				"gzip",
+				"netrwPlugin",
+				"tarPlugin",
+				"tohtml",
+				"tutor",
+				"zipPlugin",
+			},
+		},
+	},
+	change_detection = {
+		notify = false,
 	},
 })
