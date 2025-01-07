@@ -371,38 +371,12 @@ return require("lazy").setup({
 	-- SonarLint integration
 	{
 		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
 			"neovim/nvim-lspconfig",
 			"williamboman/mason.nvim",
 		},
 		config = function()
-			local mason_path = vim.fn.glob(vim.fn.stdpath("data") .. "/mason/")
-			require("sonarlint").setup({
-				server = {
-					cmd = {
-						"/usr/lib/jvm/java-23-openjdk/bin/java",
-						"-jar",
-						mason_path .. "packages/sonarlint-language-server/extension/server/sonarlint-ls.jar",
-						"-stdio",
-					},
-				},
-				filetypes = {
-					"python",
-					"cpp",
-					"javascript",
-					"typescript",
-					"html",
-					"css",
-					"java",
-					"go",
-				},
-				settings = {
-					sonarlint = {
-						enabled = true,
-					},
-				},
-			})
+			require("plugins.lsp.sonarlint").setup()
 		end,
 	},
 }, {
