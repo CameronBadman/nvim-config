@@ -1,5 +1,6 @@
 local M = {}
 
+-- Function to handle Neo-tree focus
 local function focus_neo_tree()
 	local neo_tree_wins = vim.tbl_filter(function(win)
 		local buf = vim.api.nvim_win_get_buf(win)
@@ -13,6 +14,32 @@ local function focus_neo_tree()
 	end
 end
 
+-- Function to handle startup behavior
+local function setup_startup_behavior()
+	local argc = vim.fn.argc()
+
+	if argc == 0 then
+		-- No files specified, open and focus Neo-tree
+		vim.defer_fn(function()
+			vim.cmd("Neotree show")
+			focus_neo_tree()
+		end, 10)
+	else
+		-- Files specified, open Neo-tree but don't focus it
+		vim.defer_fn(function()
+			vim.cmd("Neotree show")
+			-- Focus the file window
+			local file_wins = vim.tbl_filter(function(win)
+				local buf = vim.api.nvim_win_get_buf(win)
+				return vim.bo[buf].filetype ~= "neo-tree"
+			end, vim.api.nvim_list_wins())
+			if #file_wins > 0 then
+				vim.api.nvim_set_current_win(file_wins[1])
+			end
+		end, 10)
+	end
+end
+
 function M.setup()
 	-- Make FocusNeoTree available globally
 	_G.FocusNeoTree = focus_neo_tree
@@ -22,7 +49,12 @@ function M.setup()
 		popup_border_style = "rounded",
 		enable_git_status = true,
 		enable_diagnostics = true,
-
+		open_files_do_not_replace_types = {
+			"terminal",
+			"Trouble",
+			"qf",
+			"Outline",
+		},
 		filesystem = {
 			follow_current_file = {
 				enabled = true,
@@ -45,7 +77,6 @@ function M.setup()
 				},
 			},
 		},
-
 		window = {
 			position = "left",
 			width = 35,
@@ -85,35 +116,37 @@ function M.setup()
 				["c"] = "copy",
 			},
 		},
-
 		default_component_configs = {
 			icon = {
-				folder_empty = "󰗿",
-				default = "📄",
+				folder_empty = "󰜌",
+				folder_closed = "",
+				folder_open = "",
+				default = "",
 			},
 			name = {
 				trailing_slash = true,
 				use_git_status_colors = true,
+				highlight = "NeoTreeFileName",
 			},
 			git_status = {
 				symbols = {
 					added = "✚",
-					modified = "✎",
+					modified = "",
 					deleted = "✖",
-					renamed = "➜",
-					untracked = "★",
-					ignored = "◌",
-					unstaged = "✗",
-					staged = "✓",
+					renamed = "",
+					untracked = "",
+					ignored = "",
+					unstaged = "",
+					staged = "",
 					conflict = "",
 				},
 			},
 			diagnostics = {
 				symbols = {
-					hint = "💡",
-					info = "ℹ️",
-					warn = "⚠️",
-					error = "❌",
+					hint = " ",
+					info = " ",
+					warn = " ",
+					error = " ",
 				},
 				highlights = {
 					hint = "DiagnosticSignHint",
@@ -127,13 +160,7 @@ function M.setup()
 
 	-- Set up autocommand for startup behavior
 	vim.api.nvim_create_autocmd("VimEnter", {
-		callback = function()
-			if vim.fn.argc() == 0 then
-				vim.defer_fn(function()
-					vim.cmd("Neotree show")
-				end, 10)
-			end
-		end,
+		callback = setup_startup_behavior,
 	})
 end
 
