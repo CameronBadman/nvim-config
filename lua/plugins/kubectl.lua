@@ -1,5 +1,7 @@
 local group = vim.api.nvim_create_augroup("kubectl_mappings", { clear = true })
 
+vim.keymap.set("n", "<leader>k", '<cmd>lua require("kubectl").toggle()<cr>', { noremap = true, silent = true })
+
 vim.api.nvim_create_autocmd("FileType", {
 	group = group,
 	pattern = "k8s_*",
