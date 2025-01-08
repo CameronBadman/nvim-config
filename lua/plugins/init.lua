@@ -244,50 +244,9 @@ return require("lazy").setup({
 			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-			-- Function to focus Neo-tree without closing it
-			_G.FocusNeoTree = function()
-				local is_open = vim.fn.win_findbuf(vim.fn.bufnr("neo-tree")) ~= nil
-				if is_open then
-					vim.cmd("Neotree focus")
-				else
-					vim.cmd("Neotree toggle")
-				end
-			end
-
-			require("neo-tree").setup({
-				close_if_last_window = true,
-				filesystem = {
-					follow_current_file = true,
-					use_libuv_file_watcher = true,
-					hijack_netrw = true,
-					filtered_items = {
-						visible = true,
-						hide_dotfiles = false,
-					},
-				},
-				window = {
-					width = 30,
-					position = "left",
-				},
-				default_component_configs = {
-					icon = {
-						folder_empty = "󰗿",
-					},
-					name = {
-						trailing_slash = true,
-					},
-					git_status = {
-						symbols = {
-							added = "✚",
-							modified = "✎",
-							deleted = "✖",
-						},
-					},
-				},
-			})
+			require("plugins.neo-tree") -- This assumes your Neo-tree config is in a file named neo-tree-config.lua
 		end,
 	},
-
 	-- Kubernetes integration
 	{
 		"ramilito/kubectl.nvim",
