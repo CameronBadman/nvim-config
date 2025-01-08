@@ -181,42 +181,45 @@ return require("lazy").setup({
 
 	-- Telescope
 	{
-		"nvim-telescope/telescope.nvim",
-		branch = "0.1.x",
-		cmd = "Telescope",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-		},
-		config = function()
-			require("plugins.telescope")
-		end,
-	},
+    "nvim-telescope/telescope.nvim",
+    branch = "0.1.x",
+    dependencies = {
+        "nvim-lua/plenary.nvim",
+        { 
+            "nvim-telescope/telescope-fzf-native.nvim",
+            build = "make"
+        },
+    },
+    config = function()
+        require("plugins.telescope")
+    end,
+},
 
-	-- Status line
-	{
-		"nvim-lualine/lualine.nvim",
-		event = "VeryLazy",
-		dependencies = { "kyazdani42/nvim-web-devicons" },
-		config = function()
-			require("lualine").setup({
-				options = {
-					icons_enabled = true,
-					theme = "cyberdream",
-					component_separators = { left = "", right = "" },
-					section_separators = { left = "", right = "" },
-				},
-				sections = {
-					lualine_a = { "mode" },
-					lualine_b = { "branch", "diff" },
-					lualine_c = { "filename" },
-					lualine_x = { "encoding", "fileformat", "filetype" },
-					lualine_y = { "progress" },
-					lualine_z = { "location" },
-				},
-			})
-		end,
-	},
+-- Status line
+{
+    "nvim-lualine/lualine.nvim",
+    event = "VeryLazy",
+    dependencies = { "kyazdani42/nvim-web-devicons" },
+    config = function()
+        require("lualine").setup({
+            options = {
+                icons_enabled = true,
+                theme = "cyberdream",
+                component_separators = { left = "", right = "" },
+                section_separators = { left = "", right = "" },
+            },
+            sections = {
+                lualine_a = { "mode" },
+                lualine_b = { "branch", "diff" },
+                lualine_c = { "filename" },
+                lualine_x = { "encoding", "fileformat", "filetype" },
+                lualine_y = { "progress" },
+                lualine_z = { "location" },
+            },
+        })
+    end,
+},
+
 
 	-- Theme
 	{
