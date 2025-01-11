@@ -1,3 +1,8 @@
-require("plugins.init")
+-- Bootstrap lazy.nvim
+require("plugins.lazy").bootstrap()
 
-require("config.init")
+-- Load core configurations
+require("config").setup()
+
+-- Initialize plugins
+require("plugins.lazy").setup()
